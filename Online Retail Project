@@ -1,0 +1,203 @@
+ghda--Visualize Total Quantity by Customer Name from highest to lowest
+
+SELECT [Customer Name], SUM(Quantity) AS TotalQuantity
+FROM Orders$
+GROUP BY [Customer Name]
+ORDER BY TotalQuantity DESC
+
+--Visualize Total Sales by Region from highest to lowest
+
+SELECT Region, SUM(Sales) AS TotalSales
+FROM Orders$
+GROUP BY Region
+ORDER BY TotalSales DESC
+
+--Visualize Total Sales by Region from highest to lowest and rounding the Sales Number
+
+SELECT Region, CAST(ROUND(SUM(Sales),2) AS varchar) AS TotalSales
+FROM Orders$
+GROUP BY Region
+ORDER BY TotalSales DESC
+
+--Visualize Total Profit by Country from highest to lowest with Profits & Losses in separate columns (when profit is negative)
+SELECT 
+    Country,
+    CASE 
+        WHEN SUM(Profit) >= 0 THEN CAST(ROUND(SUM(Profit), 2) AS VARCHAR)
+        ELSE NULL
+    END AS Profit,
+    CASE 
+        WHEN SUM(Profit) < 0 THEN CAST(ROUND(SUM(Profit), 2) AS VARCHAR)
+        ELSE NULL
+    END AS Loss
+FROM Orders$
+GROUP BY Country
+ORDER BY SUM(Profit) DESC;
+
+--JOIN function;
+
+--use a JOIN between the "Returns" and "Orders" tables based on the "Order ID" column, 
+--and then group the results by "Category" and "Sub-category" while counting the number of returns for each combination
+
+SELECT 
+    o.Category,
+    o.[Sub-category],
+    r.Region,
+    COUNT(r.Returned) AS ReturnCount
+FROM 
+    Orders$ o
+JOIN 
+    Returns$ r ON o.[Order ID] = r.[Order ID]
+GROUP BY 
+    o.Category, o.[Sub-category], r.Region
+ORDER BY 
+    o.Category, o.[Sub-category];
+
+--use a JOIN between the "Returns" and "Orders" tables based on the "Order ID" column, 
+--and then group the results by "Category" & "Region" while counting the number of returns for each combination
+
+SELECT
+    o.Category,
+	r.Region,
+	COUNT(r.Returned) AS ReturnCount
+FROM
+    Orders$ o
+JOIN
+    Returns$ r ON o.[Order ID] = r.[Order ID]
+GROUP BY
+    o.Category, r.Region
+ORDER BY o.Category
+
+--use a JOIN between the "Returns" and "Orders" tables based on the "Order ID" column, 
+--and then group the results by "Category" while counting the number of returns for each combination
+
+SELECT
+    o.Category,
+	COUNT(r.Returned) AS ReturnCount
+FROM
+    Orders$ o
+JOIN
+    Returns$ r ON o.[Order ID] = r.[Order ID]
+GROUP BY
+    o.Category
+
+--Evolution of revenue grouped by Order Date
+
+SELECT [Order Date], CAST(ROUND(SUM(Profit), 2) AS varchar) AS Profit
+FROM Orders$
+GROUP BY [Order Date] 
+
+--Evolution of revenue grouped by Order Date while removing the time from Date
+
+SELECT 
+    CONVERT(date, [Order Date]) AS OrderDate, 
+    CAST(ROUND(SUM(Profit), 2) AS varchar) AS Profit
+FROM 
+    Orders$
+GROUP BY 
+    CONVERT(date, [Order Date])
+
+--Evolution of revenue grouped by Order Date while removing the time from Date & separating profit and loss in different columns
+
+SELECT 
+    CONVERT(date, [Order Date]) AS OrderDate,
+    CASE 
+        WHEN SUM(CASE WHEN Profit >= 0 THEN Profit ELSE 0 END) > 0 
+            THEN CAST(ROUND(SUM(CASE WHEN Profit >= 0 THEN Profit ELSE 0 END), 2) AS varchar)
+        ELSE NULL
+    END AS Profit,
+    CASE 
+        WHEN SUM(CASE WHEN Profit < 0 THEN Profit ELSE 0 END) < 0 
+            THEN CAST(ROUND(SUM(CASE WHEN Profit < 0 THEN Profit ELSE 0 END), 2) AS varchar)
+        ELSE NULL
+    END AS Loss
+FROM 
+    Orders$ 
+GROUP BY 
+    CONVERT(date, [Order Date])
+
+-- Visualize which category makes the most profit
+
+SELECT 
+    Category, 
+    CASE 
+        WHEN SUM(Profit) >= 0 THEN CAST(ROUND(SUM(Profit), 2) AS VARCHAR)
+        ELSE NULL
+    END AS Profit
+FROM Orders$
+GROUP BY Category
+ORDER BY SUM(Profit) DESC;
+
+--
+
+SELECT 
+    Category, 
+    CONVERT(date, [Order Date]) AS OrderDate,
+    CASE 
+        WHEN SUM(Profit) >= 0 THEN CAST(ROUND(SUM(Profit), 2) AS VARCHAR)
+        ELSE NULL
+    END AS Profit
+FROM Orders$
+GROUP BY Category, CONVERT(date, [Order Date])
+ORDER BY SUM(Profit) DESC;
+
+-- Visualize the total profit for each Segment
+
+SELECT
+   Segment, SUM(Profit) AS TotalProfit
+FROM Orders$
+GROUP BY Segment
+ORDER BY SUM(Profit) DESC;
+
+-- Visualize the total profit for the Segment 'Consumer' only
+
+SELECT
+    Segment,
+    SUM(Profit) AS TotalProfit
+FROM Orders$
+WHERE Segment = 'Consumer'
+GROUP BY Segment 
+ORDER BY SUM(Profit) DESC;
+
+-- Visualize only the customers that have the highest quantity of orders
+
+SELECT [Customer Name], Quantity
+FROM Orders$
+ORDER BY Quantity DESC;
+
+SELECT [Customer Name], Quantity
+FROM Orders$
+WHERE Quantity = '14'
+
+-- Visualize how discounts affect sales overtime
+
+SELECT CONVERT(date, [Order Date]) AS OrderDate, Discount, SUM(Sales) AS TotalSales
+FROM Orders$
+GROUP BY Discount, CONVERT(date, [Order Date]) 
+ORDER BY TotalSales DESC;
+
+-- Visualize Total Sales by Discount
+
+SELECT Discount, SUM(Sales) AS TotalSales
+FROM Orders$
+GROUP BY Discount
+ORDER BY TotalSales DESC;
+
+
+-- Create three groupings for Discounts (<0.25; = O; >0.25)
+SELECT 
+    CASE 
+        WHEN Discount < 0.25 THEN '<0.25'
+        WHEN Discount = 0 THEN '= 0'
+        ELSE '>0.25'
+    END AS DiscountGroup,
+    SUM(Sales) AS TotalSales
+FROM Orders$
+GROUP BY 
+    CASE 
+        WHEN Discount < 0.25 THEN '<0.25'
+        WHEN Discount = 0 THEN '= 0'
+        ELSE '>0.25'
+    END
+ORDER BY 
+    TotalSales DESC;
